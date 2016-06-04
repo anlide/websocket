@@ -200,7 +200,22 @@ class ws_v13 extends ws {
         if (!$fin) {
           $this->framebuf .= $data;
         } else {
-          $this->on_frame($this->framebuf . $data, $opcodeName);
+          $this->framebuf .= $data;
+          switch ($opcode) {
+            case self::CONTINUATION:
+            case self::STRING:
+            case self::BINARY:
+              $this->on_frame($this->framebuf, $opcodeName);
+              break;
+            case self::PING:
+              $this->send_frame($this->framebuf, self::PONG);
+              break;
+            case self::PONG:
+              break;
+            default:
+              $this->close();
+              break;
+          }
           $this->framebuf = '';
         }
       }
